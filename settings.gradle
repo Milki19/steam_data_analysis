@@ -1,0 +1,4 @@
+rootProject.name = 'steam_data_analysis'
+include 'kafka-basics'
+include 'kafka-producer-wikimedia'
+include 'java-consumer-opensearch'
