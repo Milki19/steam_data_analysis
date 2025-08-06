@@ -1,15 +1,15 @@
 # Steam Data Analysis
 
-Ovaj projekat koristi **Kafka producer i consumer** kako bi se u realnom vremenu obradio dataset iz stream-a koji se nalazi u Docker kontejneru. Projekat je razvijen za **Grupu 3**, a podaci se preuzimaju sa `http://localhost:5001/stream/type3`.
+Ovaj projekat koristi **Kafka producer i consumer** kako bi se u realnom vremenu obradio dataset iz stream-a koji se nalazi u Docker kontejneru.
 
 Cilj projekta je da se podaci iz stream-a transformišu i sačuvaju u CSV fajlu, pri čemu se obrada prekida kada se pošalje poruka `"close"` sa strane producer-a.
 
 ---
 
-## ▶️ Pokretanje stream-a
+## Pokretanje stream-a
 
-1. **Preuzmi Docker `.tar` fajl za grupu 3**  
-   *(link ubaciti ovde kada bude dostupan)*
+1. **Preuzmi Docker `.tar` fajl**  
+   *https://drive.google.com/file/d/18Tqx3-EwqQy_3jGR0d8guF8nmTjaHDjp/view?usp=sharing*
 
 2. **Učitaj Docker sliku:**
 ```bash
@@ -35,7 +35,7 @@ http://localhost:5001/stream/type3
 
 ---
 
-## ⚙️ Pokretanje Java aplikacije
+## Pokretanje Java aplikacije
 
 Nakon što je stream aktivan, pokreni sledeće klase:
 
@@ -47,7 +47,7 @@ Nakon što je stream aktivan, pokreni sledeće klase:
 
 ---
 
-## 📂 Objašnjenje koda
+## Objašnjenje koda
 
 ### `Producer.java`
 - Učitava JSON podatke sa URL-a `http://localhost:5001/stream/type3`
