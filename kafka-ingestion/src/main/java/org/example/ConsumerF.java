@@ -20,7 +20,7 @@ import java.util.stream.IntStream;
 public class ConsumerF {
 
     private static final long MAX_FILE_SIZE = 450 * 1024 * 1024; // 450 MB
-    private static int fileCounter = 3;
+    private static int fileCounter = 1;
 
     private static CSVWriter createNewCSVWriter() throws Exception {
         String fileName = "game_data_part_" + fileCounter++ + ".csv";
@@ -132,7 +132,7 @@ public class ConsumerF {
                             writer.writeNext(data);
                             writtenToCsv.incrementAndGet();
 
-                            // Provera veličine fajla nakon svakog reda
+                            // Check the file size after every row and roll over to a new file at the limit
                             writer.flush();
                             if (currentFile.length() >= MAX_FILE_SIZE) {
                                 writer.close();

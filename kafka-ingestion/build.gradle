@@ -24,3 +24,19 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+// Shortcuts for running each entry point: ./gradlew runProducer, runConsumer, runConsumerSimple
+tasks.register('runProducer', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.example.Producer'
+}
+
+tasks.register('runConsumer', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.example.ConsumerF'
+}
+
+tasks.register('runConsumerSimple', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.example.ConsumerT'
+}

@@ -24,7 +24,7 @@ public class Producer {
 
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
 
-        AtomicInteger sentMessagesCount = new AtomicInteger(0); // Brojač poslatih poruka
+        AtomicInteger sentMessagesCount = new AtomicInteger(0); // number of messages sent
 
         try {
             URL url = new URL(serverUrl);
@@ -62,7 +62,7 @@ public class Producer {
         });
 
         try {
-            Thread.sleep(1); // Pauza od 1ms između poruka
+            Thread.sleep(1); // 1 ms pause between messages
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

@@ -36,10 +36,10 @@ public class ConsumerT {
 
         String csvFile = "game_data.csv";
 
-        // Brojač za praćenje koliko puta Consumer ne primi nijednu poruku
+        // Counts consecutive polls that returned no messages
         int emptyPolls = 0;
-        final int maxEmptyPolls = 5; // Nakon 5 praznih poll poziva prekidamo Consumer
-        final Duration timeout = Duration.ofSeconds(3); // 3 sekunde čekanja između iteracija
+        final int maxEmptyPolls = 5; // stop after 5 empty polls in a row
+        final Duration timeout = Duration.ofSeconds(3); // wait up to 3 s per poll
 
         AtomicInteger receivedMessagesCount = new AtomicInteger(0);
         AtomicInteger writtenToCsv = new AtomicInteger(0);
@@ -47,15 +47,12 @@ public class ConsumerT {
 
 
         try (FileWriter writer = new FileWriter(csvFile, true)) {
-//            writer.append("AppID,Name,ReleaseDate,EstimatedOwners,PeakCCU,RequiredAge,Price,Discount,DLCCount,AboutTheGame,SupportedLanguages,FullAudioLanguages,Reviews,HeaderImage,Website,SupportURL,SupportEmail,Windows,Mac,Linux,MetacriticScore,MetacriticURL,UserScore,Positive,Negative,ScoreRank,Achievements,Recommendations,Notes,AvgPlaytimeForever,AvgPlaytimeTwoWeeks,MedianPlaytimeForever,MedianPlaytimeTwoWeeks,Developers,Publishers,Categories,Genres,Tags,Screenshots,Movies\n");
-            writer.append("AppID,Name,ReleaseDate,EstimatedOwners," +
-                    "PeakCCU,RequiredAge,Price,Discount," +
-                    "DLCCount,SupportedLanguages,FullAudioLanguages,Reviews," +
-                    "Windows,Mac,Linux,MetacriticScore,U" +
-                    "serScore,Positive,Negative,ScoreRank," +
-                    "Achievements,Recommendations,AvgPlaytimeForever,AvgPlaytimeTwoWeeks," +
-                    "MedianPlaytimeForever,MedianPlaytimeTwoWeeks,Developers,Publishers," +
-                    "Categories,Genres,Tags\n");
+            writer.append("AppID,Name,ReleaseDate,EstimatedOwners,PeakCCU,RequiredAge,Price,Discount,DLCCount," +
+                    "AboutTheGame,SupportedLanguages,FullAudioLanguages,Reviews,HeaderImage,Website,SupportURL," +
+                    "SupportEmail,Windows,Mac,Linux,MetacriticScore,MetacriticURL,UserScore,Positive,Negative," +
+                    "ScoreRank,Achievements,Recommendations,Notes,AvgPlaytimeForever,AvgPlaytimeTwoWeeks," +
+                    "MedianPlaytimeForever,MedianPlaytimeTwoWeeks,Developers,Publishers,Categories,Genres,Tags," +
+                    "Screenshots,Movies\n");
 
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(timeout);
@@ -71,7 +68,7 @@ public class ConsumerT {
                         break;
                     }
                 } else {
-                    emptyPolls = 0; // Resetujemo brojač ako su stigle nove poruke
+                    emptyPolls = 0; // reset once new messages arrive
 
                     for (ConsumerRecord<String, String> record : records) {
                         receivedMessagesCount.incrementAndGet();
@@ -89,8 +86,9 @@ public class ConsumerT {
                             try {
                                 price = String.format("%.2f", Double.parseDouble(price));
                             } catch (NumberFormatException e) {
-                                price = "0.00"; // Ako ne uspe, postavi na 0.00
-                            }                  String discount = escapeCsv(jsonData.optString("Discount", ""));
+                                price = "0.00"; // fall back to 0.00 if the price can't be parsed
+                            }
+                            String discount = escapeCsv(jsonData.optString("Discount", ""));
                             String dlcCount = escapeCsv(jsonData.optString("DLC count", ""));
                             String aboutTheGame = escapeCsv(jsonData.optString("About the game", "").replace("\n", " "));
                             String reviews = escapeCsv(jsonData.optString("Reviews", ""));
@@ -115,7 +113,7 @@ public class ConsumerT {
                             String medianPlaytimeForever = escapeCsv(jsonData.optString("Median playtime forever", ""));
                             String medianPlaytimeTwoWeeks = escapeCsv(jsonData.optString("Median playtime two weeks", ""));
 
-                            // Parsiranje lista
+                            // List-valued fields
                             String supportedLanguages = getJsonArrayAsString(jsonData, "Supported languages");
                             String fullAudioLanguages = getJsonArrayAsString(jsonData, "Full audio languages");
                             String developers = getJsonArrayAsString(jsonData, "Developers");
@@ -126,9 +124,9 @@ public class ConsumerT {
                             String screenshots = getJsonArrayAsString(jsonData, "Screenshots");
                             String movies = getJsonArrayAsString(jsonData, "Movies");
 
-                            //sve kolone
+                            // all 40 columns, same order as the header
                             String csvLine = String.format(
-                                    "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s\n",
+                                    "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
                                     appId, name, releaseDate, estimatedOwners, peakCCU, requiredAge, price, discount, dlcCount, aboutTheGame,
                                     supportedLanguages, fullAudioLanguages, reviews, headerImage, website, supportUrl, supportEmail,
                                     windows, mac, linux, metacriticScore, metacriticUrl, userScore, positive, negative, scoreRank,
@@ -162,24 +160,24 @@ public class ConsumerT {
             try {
                 String rawData = json.optString(key, "[]").trim();
 
-                // Ako string koristi apostrofe umesto pravih JSON navodnika, konvertuj ih
+                // The source uses single quotes instead of proper JSON double quotes
                 rawData = rawData.replace("'", "\"");
 
-                // Ako izgleda kao JSON niz, parsiraj ga
+                // Parse it if it looks like a JSON array
                 if (rawData.startsWith("[") && rawData.endsWith("]")) {
                     JSONArray jsonArray = new JSONArray(rawData);
                     List<String> list = IntStream.range(0, jsonArray.length())
                             .mapToObj(i -> jsonArray.optString(i, "").trim())
                             .collect(Collectors.toList());
 
-                    return String.join(";", list); // Koristi ";" za CSV format
+                    return String.join(";", list); // ";" so list items don't clash with the CSV delimiter
                 }
 
-                // Ako nije validan JSON niz, vraćamo sirovi string sa zarezima kao separatorom
+                // Not a valid JSON array: return the raw string with ";" as the separator
                 return rawData.replace(",", ";");
 
             } catch (Exception e) {
-                return ""; // Ako dođe do greške, vraćamo prazan string
+                return ""; // on any parsing error, leave the field empty
             }
         }
         return "";
@@ -187,6 +185,6 @@ public class ConsumerT {
 
 
     private static String escapeCsv(String value) {
-        return "\"" + value.replace("\"", "\"\"") + "\""; // Escape dvostruke navodnike i obavij ih sa još jednim parom navodnika
+        return "\"" + value.replace("\"", "\"\"") + "\""; // standard CSV quoting: double the quotes, wrap in quotes
     }
 }
